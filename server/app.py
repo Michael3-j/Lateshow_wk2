@@ -88,6 +88,7 @@ class Appearances(Resource):
         except (ValueError, TypeError) as e:
             return {"errors": [str(e)]}, 400
         except IntegrityError:
+            # used to undo uncommited changes.
             db.session.rollback()
             return {"errors": ["Database integrity error"]}, 400
 
