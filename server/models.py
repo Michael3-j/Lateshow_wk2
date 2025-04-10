@@ -6,6 +6,8 @@ from sqlalchemy_serializer import SerializerMixin
 # Define the Episode model
 class Episode(db.Model, SerializerMixin):
     __tablename__ = 'episodes'
+    serialize_rules = ('-appearances.episode', '-guests.episodes',)
+
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, nullable=False)
@@ -15,8 +17,8 @@ class Episode(db.Model, SerializerMixin):
     appearances = db.relationship('Appearance', backref='episode', cascade='all, delete-orphan')
     guests = db.relationship('Guest', secondary='appearances', back_populates='episodes')
 
-    # Avoid deep recursion in serialization
-    serialize_rules = ('-appearances.episode', '-guests.episodes')
+    
+    
 
     def to_dict(self):
         return {
@@ -28,6 +30,7 @@ class Episode(db.Model, SerializerMixin):
 # Define the Guest model
 class Guest(db.Model, SerializerMixin):
     __tablename__ = 'guests'
+    serialize_rules = ('-appearances.guest', '-episodes.guests',)
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
@@ -37,8 +40,8 @@ class Guest(db.Model, SerializerMixin):
     appearances = db.relationship('Appearance', backref='guest', cascade='all, delete-orphan')
     episodes = db.relationship('Episode', secondary='appearances', back_populates='guests')
 
-    # Avoid deep recursion in serialization
-    serialize_rules = ('-appearances.guest', '-episodes.guests')
+    
+    
 
     def to_dict(self):
         return {
@@ -50,6 +53,7 @@ class Guest(db.Model, SerializerMixin):
 # Define the Appearance model
 class Appearance(db.Model, SerializerMixin):
     __tablename__ = 'appearances'
+    serialize_rules = ('-episode.appearances', '-guest.appearances',)
 
     id = db.Column(db.Integer, primary_key=True)
     rating = db.Column(db.Integer, nullable=False)
@@ -58,8 +62,8 @@ class Appearance(db.Model, SerializerMixin):
     episode_id = db.Column(db.Integer, db.ForeignKey('episodes.id'))
     guest_id = db.Column(db.Integer, db.ForeignKey('guests.id'))
 
-    # Serialization rules to avoid deep recursion
-    serialize_rules = ('-episode.appearances', '-guest.appearances')
+    
+    
 
     @validates('rating')
     def validate_rating(self, key, value):
