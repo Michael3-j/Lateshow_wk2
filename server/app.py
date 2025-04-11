@@ -27,9 +27,10 @@ from models import Episode, Guest, Appearance
 class Episodes(Resource):
     def get(self):
         episodes = Episode.query.all()
-        return [ep.to_dict() for ep in episodes], 200
-    
+        return {"episodes": [ep.to_dict() for ep in episodes]}, 200
+
 api.add_resource(Episodes, '/episodes')
+
 
 class EpisodeByID(Resource):
     def get(self, id):
@@ -46,17 +47,19 @@ class EpisodeByID(Resource):
                 }
                 for ap in episode.appearances
             ]
-            return episode_dict, 200
+            return {"episode": episode_dict}, 200
         return {"error": "Episode not found"}, 404
 
 api.add_resource(EpisodeByID, '/episodes/<int:id>')
 
+
 class Guests(Resource):
     def get(self):
         guests = Guest.query.all()
-        return [guest.to_dict() for guest in guests], 200
-    
+        return {"guests": [guest.to_dict() for guest in guests]}, 200
+
 api.add_resource(Guests, '/guests')
+
 
 class Appearances(Resource):
     def post(self):
@@ -66,15 +69,18 @@ class Appearances(Resource):
             episode_id = data.get("episode_id")
             guest_id = data.get("guest_id")
 
+            # Validate rating
             if not isinstance(rating, int) or not (1 <= rating <= 5):
                 raise ValueError("Rating must be an integer between 1 and 5.")
 
+            # Validate foreign keys
             episode = Episode.query.get(episode_id)
             guest = Guest.query.get(guest_id)
 
             if not episode or not guest:
                 raise ValueError("Invalid episode_id or guest_id.")
 
+            # Create and commit new appearance
             new_appearance = Appearance(
                 rating=rating,
                 episode_id=episode_id,
@@ -83,7 +89,7 @@ class Appearances(Resource):
             db.session.add(new_appearance)
             db.session.commit()
 
-            return new_appearance.to_dict(), 201
+            return {"appearance": new_appearance.to_dict()}, 201
 
         except (ValueError, TypeError) as e:
             return {"errors": [str(e)]}, 400
@@ -92,11 +98,8 @@ class Appearances(Resource):
             db.session.rollback()
             return {"errors": ["Database integrity error"]}, 400
 
-
 api.add_resource(Appearances, '/appearances')
 
 # ENTRY POINT 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
